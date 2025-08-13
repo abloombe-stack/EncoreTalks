@@ -14,9 +14,12 @@
     "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
-    "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
+    "start": "npm run start --workspace=backend",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
     "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
     "install:all": "npm install && npm install --workspaces"
   },
   "devDependencies": {

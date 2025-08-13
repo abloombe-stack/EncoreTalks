@@ -7,6 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "db:migrate": "node ../scripts/migrate.js",
+    "db:seed": "node ../scripts/seed.js",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
@@ -14,9 +16,6 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write src/**/*.{ts,tsx}",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node scripts/migrate.js",
-    "db:seed": "node scripts/seed.js",
-    "db:reset": "npm run db:migrate && npm run db:seed",
     "generate:docs": "swagger-jsdoc -d swaggerDef.js src/routes/*.ts -o docs/api.json",
     "postinstall": "husky install"
   },
@@ -38,6 +37,7 @@
     "resend": "^2.1.0",
     "stripe": "^14.10.0",
     "twilio": "^4.19.0",
+    "uuid": "^9.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
