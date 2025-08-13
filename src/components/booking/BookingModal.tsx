@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X, CreditCard } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
@@ -11,7 +11,7 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ expert, isOpen, onClose }: BookingModalProps) {
-  const { user } = useAuth()
+  const { user: _user } = useAuth()
   const { addNotification } = useNotifications()
   const stripe = useStripe()
   const elements = useElements()
