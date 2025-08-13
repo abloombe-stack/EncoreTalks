@@ -1,0 +1,1009 @@
+openapi: 3.0.3
+info:
+  title: EncoreTalks API
+  description: |
+    EncoreTalks is a professional marketplace connecting clients with verified experts for 1-on-1 video calls, mentorship, and group sessions.
+    
+    ## Features
+    - Expert discovery with AI-powered matching
+    - Flexible pricing (per-minute or fixed sessions)
+    - Integrated video calling with WebRTC
+    - Payment processing with Stripe
+    - Mentorship subscriptions
+    - Enterprise organization support
+    - AI-generated session summaries
+    
+    ## Authentication
+    This API uses Supabase Auth with JWT tokens. Include the token in the Authorization header:
+    `Authorization: Bearer <your-jwt-token>`
+  version: 1.0.0
+  contact:
+    name: EncoreTalks API Support
+    email: api-support@encoretalks.com
+    url: https://encoretalks.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.encoretalks.com/api
+    description: Production server
+  - url: https://staging-api.encoretalks.com/api
+    description: Staging server
+  - url: http://localhost:3001/api
+    description: Development server
+
+tags:
+  - name: auth
+    description: Authentication and user management
+  - name: profiles
+    description: User profile management
+  - name: experts
+    description: Expert discovery and management
+  - name: bookings
+    description: Session booking and management
+  - name: payments
+    description: Payment processing and earnings
+  - name: messages
+    description: In-session and mentorship messaging
+  - name: match
+    description: AI-powered expert matching
+  - name: mentorship
+    description: Mentorship plans and subscriptions
+  - name: admin
+    description: Administrative functions
+  - name: organizations
+    description: Enterprise organization management
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check API health status
+      tags: [health]
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /experts:
+    get:
+      summary: Search and list experts
+      description: Retrieve a list of experts with optional filtering
+      tags: [experts]
+      parameters:
+        - name: category
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+            format: uuid
+        - name: tags
+          in: query
+          description: Filter by expertise tags (comma-separated)
+          schema:
+            type: string
+            example: "javascript,react,nodejs"
+        - name: min_rating
+          in: query
+          description: Minimum rating filter
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+        - name: max_rate
+          in: query
+          description: Maximum rate per minute in cents
+          schema:
+            type: integer
+            minimum: 0
+        - name: language
+          in: query
+          description: Filter by language
+          schema:
+            type: string
+            example: "en"
+        - name: available_now
+          in: query
+          description: Filter experts available now
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of experts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Expert'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /experts/{id}:
+    get:
+      summary: Get expert profile
+      description: Retrieve detailed information about a specific expert
+      tags: [experts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Expert ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Expert profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpertDetail'
+        '404':
+          description: Expert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update expert profile
+      description: Update expert profile information (requires authentication)
+      tags: [experts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Expert ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpertUpdate'
+      responses:
+        '200':
+          description: Expert profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expert'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Expert not found
+
+  /experts/{id}/availability:
+    get:
+      summary: Get expert availability
+      description: Retrieve expert's availability schedule
+      tags: [experts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Expert ID
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          description: Start date for availability lookup
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: End date for availability lookup
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Expert availability
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availability:
+                    type: object
+                    description: Weekly availability schedule
+                  booked_slots:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        start:
+                          type: string
+                          format: date-time
+                        end:
+                          type: string
+                          format: date-time
+
+  /bookings:
+    get:
+      summary: List user's bookings
+      description: Retrieve bookings for the authenticated user
+      tags: [bookings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by booking status
+          schema:
+            type: string
+            enum: [requested, confirmed, in_progress, completed, cancelled, refunded]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a booking
+      description: Create a new session booking
+      tags: [bookings]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+                  payment_client_secret:
+                    type: string
+                    description: Stripe payment client secret for completing payment
+        '400':
+          description: Invalid booking data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /bookings/{id}:
+    get:
+      summary: Get booking details
+      description: Retrieve detailed information about a specific booking
+      tags: [bookings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Booking ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Booking not found
+
+    put:
+      summary: Update booking
+      description: Update booking status or details
+      tags: [bookings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Booking ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingUpdate'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Booking not found
+
+  /match:
+    post:
+      summary: AI-powered expert matching
+      description: Find experts that match specific criteria and goals
+      tags: [match]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+      responses:
+        '200':
+          description: Matching experts found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponse'
+        '400':
+          description: Invalid match criteria
+
+  /payments/setup-connect:
+    post:
+      summary: Setup Stripe Connect for expert
+      description: Initialize Stripe Connect onboarding for expert payouts
+      tags: [payments]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stripe Connect onboarding URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  onboarding_url:
+                    type: string
+                    format: uri
+                    description: URL to complete Stripe Connect onboarding
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not an expert
+
+  /payments/connect-status:
+    get:
+      summary: Check Stripe Connect status
+      description: Get expert's Stripe Connect account status
+      tags: [payments]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stripe Connect status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connected:
+                    type: boolean
+                  account_id:
+                    type: string
+                  requirements:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /payments/earnings:
+    get:
+      summary: Get expert earnings
+      description: Retrieve earnings summary for expert
+      tags: [payments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          description: Start date for earnings period
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: End date for earnings period
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Earnings data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Earnings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not an expert
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: array
+          items:
+            type: object
+          description: Additional error details
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        hasMore:
+          type: boolean
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          default: "UTC"
+        languages:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+
+    Expert:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            profiles:
+              $ref: '#/components/schemas/Profile'
+            headline:
+              type: string
+            expertise_tags:
+              type: array
+              items:
+                type: string
+            years_experience:
+              type: integer
+              minimum: 0
+            rate_cents_per_minute:
+              type: integer
+              minimum: 0
+            fixed_15m_cents:
+              type: integer
+              minimum: 0
+            fixed_30m_cents:
+              type: integer
+              minimum: 0
+            fixed_60m_cents:
+              type: integer
+              minimum: 0
+            rating_avg:
+              type: number
+              minimum: 0
+              maximum: 5
+            rating_count:
+              type: integer
+              minimum: 0
+            expert_badges:
+              type: array
+              items:
+                type: object
+                properties:
+                  badge:
+                    type: string
+                    enum: [verified_credentials, background_checked, notable]
+
+    ExpertDetail:
+      allOf:
+        - $ref: '#/components/schemas/Expert'
+        - type: object
+          properties:
+            intro_video_url:
+              type: string
+              format: uri
+              nullable: true
+            reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+            mentorship_plans:
+              type: array
+              items:
+                $ref: '#/components/schemas/MentorshipPlan'
+
+    ExpertUpdate:
+      type: object
+      properties:
+        headline:
+          type: string
+          minLength: 10
+          maxLength: 200
+        expertise_tags:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        intro_video_url:
+          type: string
+          format: uri
+        years_experience:
+          type: integer
+          minimum: 0
+          maximum: 50
+        rate_cents_per_minute:
+          type: integer
+          minimum: 0
+        fixed_15m_cents:
+          type: integer
+          minimum: 0
+        fixed_30m_cents:
+          type: integer
+          minimum: 0
+        fixed_60m_cents:
+          type: integer
+          minimum: 0
+        availability_json:
+          type: object
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        mode:
+          type: string
+          enum: [fixed, per_minute]
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [requested, confirmed, in_progress, completed, cancelled, refunded]
+        meeting_url:
+          type: string
+          format: uri
+          nullable: true
+        price_cents_total:
+          type: integer
+          minimum: 0
+        commission_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+        expert_net_cents:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+
+    BookingDetail:
+      allOf:
+        - $ref: '#/components/schemas/Booking'
+        - type: object
+          properties:
+            client:
+              $ref: '#/components/schemas/Profile'
+            expert:
+              $ref: '#/components/schemas/Expert'
+            category:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                icon:
+                  type: string
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+            recordings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recording'
+
+    BookingCreate:
+      type: object
+      required:
+        - expert_id
+        - mode
+        - scheduled_start
+        - scheduled_end
+      properties:
+        expert_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [fixed, per_minute]
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
+        org_id:
+          type: string
+          format: uuid
+
+    BookingUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [confirmed, cancelled, in_progress, completed]
+        actual_start:
+          type: string
+          format: date-time
+        actual_end:
+          type: string
+          format: date-time
+        meeting_url:
+          type: string
+          format: uri
+
+    MatchRequest:
+      type: object
+      required:
+        - goal
+      properties:
+        goal:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Description of what the user wants to achieve
+        category_id:
+          type: string
+          format: uuid
+        budget_max_cents:
+          type: integer
+          minimum: 0
+        language:
+          type: string
+          default: "en"
+        timezone:
+          type: string
+        urgency:
+          type: string
+          enum: [immediate, within_hour, today, this_week]
+          default: this_week
+
+    MatchResponse:
+      type: object
+      properties:
+        matches:
+          type: array
+          items:
+            type: object
+            properties:
+              expert:
+                $ref: '#/components/schemas/Expert'
+              score:
+                type: integer
+                minimum: 0
+                maximum: 100
+              reasons:
+                type: array
+                items:
+                  type: string
+              next_available:
+                type: object
+                properties:
+                  hours:
+                    type: integer
+                  day:
+                    type: string
+        fastest_available:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expert'
+        highest_rated:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expert'
+        total_experts:
+          type: integer
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+        rater_id:
+          type: string
+          format: uuid
+        ratee_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        profiles:
+          $ref: '#/components/schemas/Profile'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+          nullable: true
+        mentorship_id:
+          type: string
+          format: uuid
+          nullable: true
+        sender_id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        file_url:
+          type: string
+          format: uri
+          nullable: true
+        sent_at:
+          type: string
+          format: date-time
+
+    Recording:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+        media_url:
+          type: string
+          format: uri
+          nullable: true
+        transcript_url:
+          type: string
+          format: uri
+          nullable: true
+        ai_summary_md:
+          type: string
+          nullable: true
+        consent_flags:
+          type: object
+        processing_status:
+          type: string
+          enum: [pending, processing, completed, failed]
+
+    MentorshipPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        minutes_per_week:
+          type: integer
+          minimum: 1
+        monthly_price_cents:
+          type: integer
+          minimum: 0
+        async_chat:
+          type: boolean
+        is_active:
+          type: boolean
+
+    Earnings:
+      type: object
+      properties:
+        total_earnings_cents:
+          type: integer
+          minimum: 0
+        total_fees_cents:
+          type: integer
+          minimum: 0
+        session_count:
+          type: integer
+          minimum: 0
+        payments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              amount_cents:
+                type: integer
+              expert_payout_cents:
+                type: integer
+              platform_fee_cents:
+                type: integer
+              created_at:
+                type: string
+                format: date-time
+              booking:
+                type: object
+                properties:
+                  scheduled_start:
+                    type: string
+                    format: date-time
+                  mode:
+                    type: string
+                    enum: [fixed, per_minute]
