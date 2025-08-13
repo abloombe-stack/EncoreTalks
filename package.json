@@ -1,0 +1,45 @@
+{
+  "name": "encoretalks",
+  "version": "1.0.0",
+  "description": "EncoreTalks - Expert marketplace platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "install:all": "npm install && npm install --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/encoretalks/encoretalks.git"
+  },
+  "keywords": [
+    "marketplace",
+    "experts",
+    "video-calls",
+    "mentorship",
+    "typescript",
+    "react",
+    "express",
+    "supabase"
+  ],
+  "author": "EncoreTalks Team",
+  "license": "MIT"
+}
