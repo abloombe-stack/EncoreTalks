@@ -18,33 +18,58 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// API routes placeholder
+// Mock API endpoints for preview
 app.get('/api/experts', (_req, res) => {
   res.json({
     experts: [
       {
         id: '1',
-        name: 'Dr. Sarah Wilson',
-        title: 'Former McKinsey Partner',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?w=150&h=150&fit=crop&crop=face',
-        rating: 4.9,
-        reviews: 127,
-        rate: 8.50,
-        tags: ['Business Strategy', 'Leadership'],
-        available: true
+        profiles: {
+          first_name: 'Dr. Sarah',
+          last_name: 'Wilson',
+          avatar_url: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?w=150&h=150&fit=crop&crop=face',
+          bio: 'Former McKinsey partner with 20+ years in strategy consulting',
+          languages: ['en'],
+          verified: true
+        },
+        headline: 'Strategic Business Consultant & Former McKinsey Partner',
+        expertise_tags: ['business strategy', 'leadership', 'consulting'],
+        rating_avg: 4.9,
+        rating_count: 127,
+        rate_cents_per_minute: 850,
+        fixed_30m_cents: 3200,
+        expert_badges: [
+          { badge: 'verified_credentials' },
+          { badge: 'notable' }
+        ]
       },
       {
         id: '2',
-        name: 'Marcus Chen',
-        title: 'Senior AI Engineer at Google',
-        avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?w=150&h=150&fit=crop&crop=face',
-        rating: 4.8,
-        reviews: 89,
-        rate: 6.00,
-        tags: ['AI/ML', 'Python'],
-        available: false
+        profiles: {
+          first_name: 'Marcus',
+          last_name: 'Chen',
+          avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?w=150&h=150&fit=crop&crop=face',
+          bio: 'Senior AI Engineer at Google with expertise in machine learning',
+          languages: ['en', 'zh'],
+          verified: true
+        },
+        headline: 'Senior AI Engineer at Google',
+        expertise_tags: ['artificial intelligence', 'machine learning', 'python'],
+        rating_avg: 4.8,
+        rating_count: 89,
+        rate_cents_per_minute: 600,
+        fixed_30m_cents: 2200,
+        expert_badges: [
+          { badge: 'verified_credentials' }
+        ]
       }
-    ]
+    ],
+    pagination: {
+      page: 1,
+      limit: 20,
+      total: 2,
+      hasMore: false
+    }
   });
 });
 
@@ -56,6 +81,15 @@ app.get('/api/platform/metrics', (_req, res) => {
     expert_earnings_range_max: 800,
     total_experts: 156
   });
+});
+
+app.get('/api/categories', (_req, res) => {
+  res.json([
+    { id: 'cat-business', name: 'Business & Finance', description: 'Expert guidance on business strategy', icon: '💼' },
+    { id: 'cat-tech', name: 'Technology', description: 'Software development and tech trends', icon: '💻' },
+    { id: 'cat-health', name: 'Health & Wellness', description: 'Fitness, nutrition, and wellness', icon: '🏥' },
+    { id: 'cat-creative', name: 'Creative Arts', description: 'Design, writing, and creative skills', icon: '🎨' }
+  ]);
 });
 
 // Serve built frontend

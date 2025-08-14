@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "EncoreTalks - Expert marketplace platform",
   "private": true,
+  "type": "module",
   "workspaces": [
     "frontend",
     "backend"
@@ -19,6 +20,8 @@
     "db:seed": "node scripts/seed.js"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "dotenv": "^16.3.1",
     "typescript": "^5.3.3"
   },
   "engines": {
