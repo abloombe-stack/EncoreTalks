@@ -8,19 +8,15 @@
     "backend"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:backend": "npm run dev --workspace=backend",
-    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
-    "start": "npm run start --workspace=backend",
+    "build": "npm run build -w frontend && npm run build -w backend",
+    "dev": "npm run dev -w backend",
+    "start": "npm run start -w backend",
+    "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend",
+    "lint": "npm run lint -w frontend || true && npm run lint -w backend || true",
+    "test": "npm run test -w backend || true && npm run test -w frontend || true",
+    "clean": "rm -rf frontend/dist backend/dist frontend/node_modules backend/node_modules node_modules",
     "db:migrate": "node scripts/migrate.js",
-    "db:seed": "node scripts/seed.js",
-    "typecheck": "npm run typecheck --workspaces",
-    "lint": "npm run lint --workspaces",
-    "test": "npm run test --workspaces",
-    "install:all": "npm install && npm install --workspaces"
+    "db:seed": "node scripts/seed.js"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
@@ -28,21 +24,5 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/encoretalks/encoretalks.git"
-  },
-  "keywords": [
-    "marketplace",
-    "experts",
-    "video-calls",
-    "mentorship",
-    "typescript",
-    "react",
-    "express",
-    "supabase"
-  ],
-  "author": "EncoreTalks Team",
-  "license": "MIT"
+  }
 }

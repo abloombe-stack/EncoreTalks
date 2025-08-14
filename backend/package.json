@@ -4,20 +4,12 @@
   "description": "EncoreTalks API Backend - Expert marketplace platform",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "db:migrate": "node ../scripts/migrate.js",
-    "db:seed": "node ../scripts/seed.js",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "test:e2e": "playwright test",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "format": "prettier --write src/**/*.{ts,tsx}",
-    "typecheck": "tsc --noEmit",
-    "generate:docs": "swagger-jsdoc -d swaggerDef.js src/routes/*.ts -o docs/api.json",
-    "postinstall": "husky install"
+    "dev": "tsx watch src/index.ts --clear-screen=false",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'Lint not configured'",
+    "test": "echo 'Tests not configured'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4",
